@@ -1,6 +1,12 @@
 from random import randint, uniform
 from copy import deepcopy
-from scipy import sqrt
+from scipy import sqrt, mean
+
+'''
+cross isn't working correctly
+given values shouldn't change during cross 
+make array of changable numbers
+'''
 			  #0 1 2 3  4 5 6 7  
 START_BOARD = [1,0,0,3, 0,0,1,0, 0,2,0,0, 4,0,0,2]
 SOLUTION_BOARD = [1,4,2,3, 2,3,1,4, 3,2,4,1, 4,1,3,2]
@@ -89,11 +95,14 @@ def fitness(board):
 	return maxFitness - conflicts
 
 # returns true if the individual is chosen to reproduce, false otherwise
-def shouldReproduce(individual, fitness):
-	if uniform(0, maxFitness) <= fitness:
-		return True 
-	else:
-		return False
+def shouldReproduce(individual, fitness, meanFitness):
+	if fitness >= meanFitness - meanFitness * 0.005:
+		return True
+	return False
+	# if uniform(0, maxFitness) <= fitness:
+	# 	return True 
+	# else:
+	# 	return False
 
 # returns new population after random crossing occurs
 def cross(population):
@@ -109,8 +118,10 @@ def cross(population):
 		population.pop(secondIndex)
 
 		crossIndex = randint(1, n * n -1)
-		child = individualOne[0:crossIndex] + individualTwo[crossIndex:]
-		newPopulation.append(child)
+		child1 = individualOne[0:crossIndex] + individualTwo[crossIndex:]
+		child2 = individualTwo[0:crossIndex] + individualOne[crossIndex:]
+		newPopulation.append(child1)
+		newPopulation.append(child2)
 
 	return newPopulation
 
@@ -127,6 +138,7 @@ def solve(board, populationSize, numGenerations):
 	for generations in range(numGenerations):
 		# run fitness on the population.
 		individualFitness = [fitness(individual) for individual in population]
+		meanFitness = mean(individualFitness)
 		individualFitnessReproducing = []
 		#print(individualFitness)
 
@@ -142,11 +154,11 @@ def solve(board, populationSize, numGenerations):
 				# best individual keeps going in every population
 				bestIndividual = deepcopy(population[i])
 			if individualFitness[i] == maxFitness:
-				print(fitness(population[i]))
+				print('Max found:', fitness(population[i]))
 				return population[i]
 			else:
 				# select individuals to reproduce, empty individual board and fitness if shouldn't reproduce
-				if not shouldReproduce(population[i], individualFitness[i]):
+				if shouldReproduce(population[i], individualFitness[i], meanFitness) == False:
 					population.pop(i)
 					individualFitness.pop(i)
 				else:
@@ -157,18 +169,19 @@ def solve(board, populationSize, numGenerations):
 
 		# randomly pick two to cross until all used or only one remains
 		# if uneven number, last one gets left out?
-		
+		print('Population size:', len(population))
 		population = cross(population)
 		population.append(bestIndividual)
 		# mutation
 		for individual in population:
 			for i in range(n*n):
 				# mustation rate 
-				if randint(1, 15) == 10:
+				if randint(1, 500) == 10:
 					currentValue = individual[i]
-					mutationValue = randint(1,4)
+					mutationValue = randint(1,n)
 					while currentValue == mutationValue:
-						mutationValue = randint(1,4)
+						mutationValue = randint(1,n)
+					individual[i] = mutationValue
 
 		population.append(bestIndividual) # should this be done before or after mutation??
 		bestInThisPop = 0
@@ -179,12 +192,17 @@ def solve(board, populationSize, numGenerations):
 		if bestInThisPop > bestEver:
 			bestEver = bestInThisPop
 			print(bestEver)
+			GensWithoutImprovement -= 100
+			if GensWithoutImprovement <= 0:
+				GensWithoutImprovement = 1
 		else:
 			GensWithoutImprovement += 1
 		
 		# get new population if improvement isn't being seen
-		if GensWithoutImprovement % 10 == 0:
-			population = initialPopulation(board, populationSize)
+		# if GensWithoutImprovement % 1000 == 0:
+		# 	population = initialPopulation(board, populationSize)
+		# 	population.append(bestIndividual)
+	print('end', fitness(bestIndividual))
 	return bestIndividual
 	
 	# repeat
@@ -198,11 +216,11 @@ def solve(board, populationSize, numGenerations):
 #print('Fitness:', fitness(SOLUTION_BOARD))
 # print(columnConflicts([1,2,4,3,4,2,1,3,4,2,1,3,4,3,1,2]))
 # print(fitness([1,2,4,3,4,2,1,3,4,2,1,3,4,3,1,2]))
-popSize = 1000
-numGenerations = 10000
-r = rowConflicts(reference9)
-c = columnConflicts(reference9)
-print(r, '+', c, '=', r+c)
+popSize = 25000
+numGenerations = 5000
+# r = rowConflicts(reference9)
+# c = columnConflicts(reference9)
+# print(r, '+', c, '=', r+c)
 
 solution = solve(START_BOARD9, popSize, numGenerations)
 if solution != None:
