@@ -104,8 +104,16 @@ def shouldReproduce(individual, fitness, meanFitness):
 	# else:
 	# 	return False
 
+def changableIndex(START_BOARD):
+	changable = []
+	for i in range(n*n):
+		if START_BOARD[i] == 0:
+			changable.append(i)
+
+	return changable
+
 # returns new population after random crossing occurs
-def cross(population):
+def cross(population, changable):
 	newPopulation = []
 	while len(population) > 1:
 		# get random index of two individuals to reproduce
@@ -117,11 +125,26 @@ def cross(population):
 		individualTwo = population[secondIndex]
 		population.pop(secondIndex)
 
-		crossIndex = randint(1, n * n -1)
-		child1 = individualOne[0:crossIndex] + individualTwo[crossIndex:]
-		child2 = individualTwo[0:crossIndex] + individualOne[crossIndex:]
-		newPopulation.append(child1)
-		newPopulation.append(child2)
+		# replace with changable index from the other child
+		individual1Change = []
+		individual2Change = []
+		for index in changable:
+			individual1Change.append(individualOne[index])
+			individual2Change.append(individualTwo[index])
+
+		crossIndex = randint(1, len(changable))
+
+		child1Change = individual1Change[0:crossIndex] + individual2Change[crossIndex:]
+		child2Change = individual2Change[0:crossIndex] + individual1Change[crossIndex:]
+
+		i = 0
+		for index in changable:
+			individualOne[index] = child1Change[i]
+			individualTwo[index] = child2Change[i]
+			i += 1
+
+		newPopulation.append(individualOne)
+		newPopulation.append(individualTwo)
 
 	return newPopulation
 
@@ -167,16 +190,20 @@ def solve(board, populationSize, numGenerations):
 		#print('Number reproduce:', numberReproduce)
 		#print(individualFitness)
 
+		# get changable spots
+		changable = changableIndex(START_BOARD9)
+		#print(changable)
+
 		# randomly pick two to cross until all used or only one remains
 		# if uneven number, last one gets left out?
-		print('Population size:', len(population))
-		population = cross(population)
+				#print('Population size:', len(population))
+		population = cross(population, changable)
 		population.append(bestIndividual)
 		# mutation
 		for individual in population:
 			for i in range(n*n):
 				# mustation rate 
-				if randint(1, 500) == 10:
+				if randint(1, 100) == 10 and i in changable:
 					currentValue = individual[i]
 					mutationValue = randint(1,n)
 					while currentValue == mutationValue:
@@ -216,8 +243,10 @@ def solve(board, populationSize, numGenerations):
 #print('Fitness:', fitness(SOLUTION_BOARD))
 # print(columnConflicts([1,2,4,3,4,2,1,3,4,2,1,3,4,3,1,2]))
 # print(fitness([1,2,4,3,4,2,1,3,4,2,1,3,4,3,1,2]))
-popSize = 25000
-numGenerations = 5000
+# popSize = 100000
+# numGenerations = 10000
+popSize = 1000
+numGenerations = 1000
 # r = rowConflicts(reference9)
 # c = columnConflicts(reference9)
 # print(r, '+', c, '=', r+c)
