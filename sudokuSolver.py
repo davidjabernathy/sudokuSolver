@@ -245,8 +245,8 @@ def solve(board, populationSize, numGenerations):
 # print(fitness([1,2,4,3,4,2,1,3,4,2,1,3,4,3,1,2]))
 # popSize = 100000
 # numGenerations = 10000
-popSize = 1000
-numGenerations = 1000
+popSize = 50000
+numGenerations = 10000
 # r = rowConflicts(reference9)
 # c = columnConflicts(reference9)
 # print(r, '+', c, '=', r+c)
@@ -254,6 +254,29 @@ numGenerations = 1000
 solution = solve(START_BOARD9, popSize, numGenerations)
 if solution != None:
 		printBoard(solution)
+
+
+def testConstants(START_BOARD9, solution):
+	for i in range(len(START_BOARD9)):
+		if START_BOARD9[i] != 0 and solution[i] != START_BOARD9[i]:
+			return False
+	return True
+
+
+
+print(testConstants(START_BOARD9, solution))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
